@@ -121,7 +121,7 @@ class DaptartugasState extends State<Daptartugas> {
                 TextField(
                   controller: catatanController,
                   decoration: InputDecoration(labelText: "Catatan"),
-                  maxLines: 2, // Biar kotaknya agak luas untuk catatan
+                  maxLines: 2,
                 ),
               ],
             ),
