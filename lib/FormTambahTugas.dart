@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'KumpulanTugas.dart';
 
 class Formtambahtugas extends StatefulWidget {
-  const Formtambahtugas({super.key});
+  final KumpulanTugas? awal;
+
+  const Formtambahtugas({super.key, this.awal});
 
   @override
   State<Formtambahtugas> createState() => FormtambahtugasState();
@@ -11,10 +13,25 @@ class Formtambahtugas extends StatefulWidget {
 
 class FormtambahtugasState extends State<Formtambahtugas> {
   final formKey = GlobalKey<FormState>();
-  final judulText = TextEditingController();
-  final mataKuliahText = TextEditingController();
-  final tenggatText = TextEditingController();
-  final catatanText = TextEditingController();
+
+  late final TextEditingController judulText;
+  late final TextEditingController mataKuliahText;
+  late final TextEditingController tenggatText;
+  late final TextEditingController catatanText;
+
+  bool get modeEdit => widget.awal != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final awal = widget.awal;
+
+    judulText = TextEditingController(text: awal?.judul ?? '');
+    mataKuliahText = TextEditingController(text: awal?.mataKuliah ?? '');
+    tenggatText = TextEditingController(text: awal?.tenggat ?? '');
+    catatanText = TextEditingController(text: awal?.catatan ?? '');
+  }
+
   @override
   void dispose() {
     judulText.dispose();
@@ -26,6 +43,7 @@ class FormtambahtugasState extends State<Formtambahtugas> {
 
   void simpan() {
     if (!formKey.currentState!.validate()) return;
+
     final baru = KumpulanTugas(
       judul: judulText.text.trim(),
       mataKuliah: mataKuliahText.text.trim(),
@@ -38,12 +56,12 @@ class FormtambahtugasState extends State<Formtambahtugas> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tambah Tugas')),
+      appBar: AppBar(title: Text(modeEdit ? 'Edit Tugas' : 'Tambah Tugas')),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Form(
           key: formKey,
-          child: Column(
+          child: ListView(
             children: [
               TextFormField(
                 controller: judulText,
@@ -65,9 +83,10 @@ class FormtambahtugasState extends State<Formtambahtugas> {
               SizedBox(height: 16),
               TextFormField(
                 controller: mataKuliahText,
+                readOnly: modeEdit,
                 keyboardType: TextInputType.text,
                 decoration: InputDecoration(
-                  labelText: 'matakuliah',
+                  labelText: 'Mata Kuliah',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
@@ -82,7 +101,7 @@ class FormtambahtugasState extends State<Formtambahtugas> {
                 controller: tenggatText,
                 keyboardType: TextInputType.datetime,
                 decoration: InputDecoration(
-                  labelText: 'waktu tenggat',
+                  labelText: 'Waktu Tenggat',
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
@@ -96,16 +115,20 @@ class FormtambahtugasState extends State<Formtambahtugas> {
               TextFormField(
                 controller: catatanText,
                 keyboardType: TextInputType.text,
+                maxLines: 3,
                 decoration: InputDecoration(
-                  labelText: 'catatan Tugas',
+                  labelText: 'Catatan Tugas',
                   border: OutlineInputBorder(),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: FilledButton(onPressed: simpan, child: Text('simpan')),
+                child: FilledButton(
+                  onPressed: simpan,
+                  child: Text(modeEdit ? 'Simpan Perubahan' : 'Simpan'),
+                ),
               ),
             ],
           ),

@@ -32,14 +32,32 @@ class DaptartugasState extends State<Daptartugas> {
       catatan: 'semoga bisa dapat kurumi',
     ),
   ];
-  Future<void> bukaFromTambah() async {
+  Future<void> bukaFormTambah() async {
     final hasil = await Navigator.push<KumpulanTugas>(
       context,
-      MaterialPageRoute(builder: (_) => Formtambahtugas()),
+      MaterialPageRoute(builder: (_) => Formtambahtugas(awal: null)),
     );
     if (hasil != null) {
       setState(() {
         data.add(hasil);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tugas sudah di tambahkan!')),
+        );
+      });
+    }
+  }
+
+  Future<void> bukaFormEdit(int index) async {
+    final hasil = await Navigator.push<KumpulanTugas>(
+      context,
+      MaterialPageRoute(builder: (_) => Formtambahtugas(awal: data[index])),
+    );
+    if (hasil != null) {
+      setState(() {
+        data[index] = hasil;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tugas sudah di edit!')));
       });
     }
   }
@@ -51,8 +69,8 @@ class DaptartugasState extends State<Daptartugas> {
     );
   }
 
-  void hapus(int index) {
-    showDialog(
+  Future<void> hapus(int index) async {
+    final yakin = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -61,16 +79,13 @@ class DaptartugasState extends State<Daptartugas> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.pop(context, false);
               },
               child: Text("Batal"),
             ),
             TextButton(
               onPressed: () {
-                setState(() {
-                  data.removeAt(index);
-                });
-                Navigator.of(context).pop();
+                Navigator.pop(context, true);
               },
               child: Text("hapus", style: TextStyle(color: Colors.red)),
             ),
@@ -78,74 +93,53 @@ class DaptartugasState extends State<Daptartugas> {
         );
       },
     );
+    if (yakin == true && mounted) {
+      setState(() {
+        data.removeAt(index);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Tugas sudah dihapus!')));
+      });
+    }
   }
 
-  void editDialog(int index) {
-    final indexTugas = data[index];
-    TextEditingController judulController = TextEditingController(
-      text: indexTugas.judul,
-    );
-    TextEditingController mataKuliahController = TextEditingController(
-      text: indexTugas.mataKuliah,
-    );
-    TextEditingController tenggatController = TextEditingController(
-      text: indexTugas.tenggat,
-    );
-    TextEditingController catatanController = TextEditingController(
-      text: indexTugas.catatan,
-    );
+  void hapusSemua() {
+    if (data.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tugas sudah kosong, tidak ada yang bisa dihapus!'),
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("kompirmasi edit"),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: judulController,
-                  decoration: InputDecoration(labelText: "Judul Tugas"),
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  controller: mataKuliahController,
-                  decoration: InputDecoration(labelText: "Mata Kuliah"),
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  controller: tenggatController,
-                  decoration: InputDecoration(labelText: "Tenggat Waktu"),
-                ),
-                SizedBox(height: 8),
-                TextField(
-                  controller: catatanController,
-                  decoration: InputDecoration(labelText: "Catatan"),
-                  maxLines: 2,
-                ),
-              ],
-            ),
-          ),
+          title: const Text("Konfirmasi Hapus Semua"),
+          content: const Text("Yakin ingin menghapus seluruh daftar tugas? "),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text("batal edit"),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Batal"),
             ),
             TextButton(
               onPressed: () {
                 setState(() {
-                  data[index] = KumpulanTugas(
-                    judul: judulController.text,
-                    mataKuliah: mataKuliahController.text,
-                    tenggat: tenggatController.text,
-                    catatan: catatanController.text,
+                  data.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tugas sudah di hapus semua!'),
+                    ),
                   );
                 });
                 Navigator.of(context).pop();
               },
-              child: Text("ubah data"),
+              child: const Text(
+                "Hapus Semua",
+                style: TextStyle(color: Colors.red),
+              ),
             ),
           ],
         );
@@ -186,7 +180,7 @@ class DaptartugasState extends State<Daptartugas> {
                       children: [
                         IconButton(
                           icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => editDialog(index),
+                          onPressed: () => bukaFormEdit(index),
                         ),
                         IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
@@ -204,10 +198,25 @@ class DaptartugasState extends State<Daptartugas> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: bukaFromTambah,
-        icon: Icon(Icons.add),
-        label: Text('TambahJadwal'),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Tombol Tambah Tugas
+          FloatingActionButton.extended(
+            onPressed: bukaFormTambah,
+            icon: Icon(Icons.add),
+            label: Text('Tambah Tugas'),
+          ),
+
+          SizedBox(width: 12),
+          // Tombol Hapus Semua
+          FloatingActionButton.extended(
+            onPressed: hapusSemua,
+            icon: Icon(Icons.delete_sweep),
+            label: Text('Hapus Semua'),
+            backgroundColor: Colors.red,
+          ),
+        ],
       ),
     );
   }
